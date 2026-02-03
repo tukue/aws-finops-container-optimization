@@ -69,7 +69,7 @@ This repository provides practical tools, scripts, and configurations to impleme
 
 ## Expected Results
 
-- **60-90% compute cost reduction** through spot instances and autoscaling
+- ** compute cost reduction** through spot instances and autoscaling
 - **Complete cost visibility** with team/project allocation
 - **Automated optimization** reducing manual intervention by 90%
 - **Improved resource utilization** from 30% to 80%+
