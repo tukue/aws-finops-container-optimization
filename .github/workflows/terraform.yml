@@ -1,0 +1,48 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [ master, main ]
+    paths: [ 'infra/terraform/**' ]
+  pull_request:
+    branches: [ master, main ]
+    paths: [ 'infra/terraform/**' ]
+
+jobs:
+  terraform:
+    name: Terraform Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        module: [vpc, eks-or-ecs, budgets, tagging]
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+    
+    - name: Terraform Format Check
+      run: terraform fmt -check
+      working-directory: infra/terraform/${{ matrix.module }}
+    
+    - name: Terraform Init
+      run: terraform init
+      working-directory: infra/terraform/${{ matrix.module }}
+    
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: infra/terraform/${{ matrix.module }}
+    
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      working-directory: infra/terraform/${{ matrix.module }}
+      env:
+        TF_VAR_project_name: "test-project"
+        TF_VAR_vpc_cidr: "10.0.0.0/16"
+        TF_VAR_availability_zones: '["eu-west-1a", "eu-west-1b"]'
+        AWS_DEFAULT_REGION: "eu-west-1"

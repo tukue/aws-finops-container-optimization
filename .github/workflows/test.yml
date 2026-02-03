@@ -2,31 +2,11 @@ name: Test FinOps Infrastructure
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ main ]
+    branches: [ master, main ]
 
 jobs:
-  terraform-test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.6.0
-    
-    - name: Terraform Format Check
-      run: terraform fmt -check -recursive infra/terraform/
-    
-    - name: Terraform Validate
-      run: |
-        cd infra/terraform/vpc && terraform init && terraform validate
-        cd ../eks-or-ecs && terraform init && terraform validate
-        cd ../budgets && terraform init && terraform validate
-        cd ../tagging && terraform init && terraform validate
-
   docker-test:
     runs-on: ubuntu-latest
     steps:
@@ -56,6 +36,7 @@ jobs:
       run: |
         kubectl --dry-run=client apply -f platform/autoscaling/hpa.yaml
         kubectl --dry-run=client apply -f platform/spot-provisioning/karpenter.yaml
+        kubectl --dry-run=client apply -f platform/kubecost/kubecost.yaml
 
   cost-optimization-test:
     runs-on: ubuntu-latest
