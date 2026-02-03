@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  inference-api:
+    build: ./services/inference-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  batch-worker:
+    build: ./services/batch-worker
+    environment:
+      - WORKER_ID=test-worker
+      - BATCH_SIZE=10
+      - MAX_ITERATIONS=5
+    depends_on:
+      - inference-api
+
+  load-test:
+    image: python:3.9-slim
+    volumes:
+      - ./test-load.py:/test-load.py
+    command: >
+      sh -c "pip install requests && python /test-load.py"
+    depends_on:
+      - inference-api

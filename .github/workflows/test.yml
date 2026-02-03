@@ -1,0 +1,69 @@
+name: Test FinOps Infrastructure
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terraform-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+    
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive infra/terraform/
+    
+    - name: Terraform Validate
+      run: |
+        cd infra/terraform/vpc && terraform init && terraform validate
+        cd ../eks-or-ecs && terraform init && terraform validate
+        cd ../budgets && terraform init && terraform validate
+        cd ../tagging && terraform init && terraform validate
+
+  docker-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker Images
+      run: |
+        docker build -t inference-api:test services/inference-api/
+        docker build -t batch-worker:test services/batch-worker/
+    
+    - name: Test Inference API
+      run: |
+        docker run -d -p 8000:8000 --name test-api inference-api:test
+        sleep 10
+        curl -f http://localhost:8000/health
+        docker stop test-api
+
+  kubernetes-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: Validate Kubernetes Manifests
+      run: |
+        kubectl --dry-run=client apply -f platform/autoscaling/hpa.yaml
+        kubectl --dry-run=client apply -f platform/spot-provisioning/karpenter.yaml
+
+  cost-optimization-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test Cost Features
+      run: |
+        grep -q "SPOT" infra/terraform/eks-or-ecs/*.tf
+        grep -q "aws_budgets_budget" infra/terraform/budgets/*.tf
+        grep -q "Project.*Environment.*Team.*CostCenter" infra/terraform/tagging/*.tf
