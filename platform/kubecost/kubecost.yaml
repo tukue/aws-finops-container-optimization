@@ -58,7 +58,10 @@ spec:
         - name: PROMETHEUS_SERVER_ENDPOINT
           value: http://prometheus-server.kubecost.svc.cluster.local
         - name: CLOUD_PROVIDER_API_KEY
-          value: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk"
+          valueFrom:
+            secretKeyRef:
+              name: kubecost-secrets
+              key: cloud-provider-api-key
         - name: CLUSTER_ID
           value: cluster-one
         ports:
@@ -102,3 +105,14 @@ spec:
             name: kubecost-cost-analyzer
             port:
               number: 9090
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubecost-secrets
+  namespace: kubecost
+type: Opaque
+data:
+  # Base64 encoded API key - replace with your actual key
+  # echo -n "your-api-key" | base64
+  cloud-provider-api-key: <base64-encoded-api-key>
