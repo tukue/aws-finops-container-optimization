@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulation-app
+  namespace: default
+  labels:
+    app: simulation-app
+    cost-center: engineering
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simulation-app
+  template:
+    metadata:
+      labels:
+        app: simulation-app
+        cost-center: engineering
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        resources:
+          # RIGHTSIZED CONFIGURATION
+          # Based on "recommendations" from Kubecost
+          requests:
+            cpu: "50m"    # 0.05 vCPU
+            memory: "64Mi" # 64 MB RAM
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
