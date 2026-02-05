@@ -1,0 +1,204 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Forecasted Monthly AWS Cost",
+      "type": "stat",
+      "datasource": "AWS CloudWatch",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.5.1",
+      "targets": [
+        {
+          "datasource": "AWS CloudWatch",
+          "dimensions": {
+            "Currency": "USD"
+          },
+          "matchExact": true,
+          "metricName": "ForecastedCharges",
+          "namespace": "AWS/Billing",
+          "period": "86400",
+          "refId": "A",
+          "region": "default",
+          "statistics": [ "Maximum" ]
+        }
+      ]
+    },
+    {
+      "title": "Current Month-to-Date AWS Cost",
+      "type": "stat",
+      "datasource": "AWS CloudWatch",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "AWS CloudWatch",
+          "dimensions": {
+            "Currency": "USD"
+          },
+          "matchExact": true,
+          "metricName": "EstimatedCharges",
+          "namespace": "AWS/Billing",
+          "period": "86400",
+          "refId": "A",
+          "region": "default",
+          "statistics": [ "Maximum" ]
+        }
+      ]
+    },
+    {
+      "title": "Daily AWS Costs",
+      "type": "timeseries",
+      "datasource": "AWS CloudWatch",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": "AWS CloudWatch",
+          "dimensions": {
+            "Currency": "USD"
+          },
+          "matchExact": true,
+          "metricName": "EstimatedCharges",
+          "namespace": "AWS/Billing",
+          "period": "86400",
+          "refId": "A",
+          "region": "default",
+          "statistics": [ "Maximum" ]
+        }
+      ]
+    },
+    {
+      "title": "Kubernetes Cost by Namespace (Last 24h)",
+      "type": "piechart",
+      "datasource": "Prometheus (from Kubecost)",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "options": {
+        "displayLabels": [ "name", "percent" ],
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "pieType": "pie"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus (from Kubecost)",
+          "expr": "sum(namespace_total_cost{window=\"24h\"}) by (namespace)",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Cost by Team (Last 24h)",
+      "type": "piechart",
+      "datasource": "Prometheus (from Kubecost)",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "options": {
+        "displayLabels": [ "name", "percent" ],
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "pieType": "pie"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus (from Kubecost)",
+          "expr": "sum(label_total_cost{label=\"team\", window=\"24h\"}) by (label_team)",
+          "legendFormat": "{{label_team}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Cost by Project (Last 24h)",
+      "type": "piechart",
+      "datasource": "Prometheus (from Kubecost)",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "options": {
+        "displayLabels": [ "name", "percent" ],
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "pieType": "pie"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus (from Kubecost)",
+          "expr": "sum(label_total_cost{label=\"project\", window=\"24h\"}) by (label_project)",
+          "legendFormat": "{{label_project}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Total Kubernetes Cost (7-day)",
+      "type": "timeseries",
+      "datasource": "Prometheus (from Kubecost)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus (from Kubecost)",
+          "expr": "sum(namespace_total_cost{window=\"7d\"})",
+          "legendFormat": "Total Cost",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "1h",
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [ "finops", "cloud-cost" ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Cloud Cost Hub",
+  "version": 4
+}

@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-alpha
+  labels:
+    team: alpha # Label on namespace can also be used for allocation
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app-alpha
+  namespace: team-alpha
+  labels:
+    app: demo-app
+    team: alpha
+    project: bluejay
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-app
+      team: alpha
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        team: alpha # This label will be used by Kubecost for cost allocation
+        project: bluejay
+    spec:
+      containers:
+      - name: web-server
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+  namespace: team-alpha
+spec:
+  selector:
+    app: demo-app
+    team: alpha
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

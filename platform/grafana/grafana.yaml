@@ -1,0 +1,336 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: grafana
+data:
+  datasources.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Prometheus (from Kubecost)
+      type: prometheus
+      access: proxy
+      url: http://prometheus-server.kubecost.svc.cluster.local
+      isDefault: true
+    - name: AWS CloudWatch
+      type: cloudwatch
+      access: proxy
+      jsonData:
+        authType: default
+        defaultRegion: eu-west-1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: grafana
+data:
+  finops-dashboard-provider.yaml: |-
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards
+  finops-dashboard.json: |-
+    {
+      "__inputs": [],
+      "__requires": [],
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "gnetId": null,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "title": "Forecasted Monthly AWS Cost",
+          "type": "stat",
+          "datasource": "AWS CloudWatch",
+          "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [ "lastNotNull" ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.5.1",
+          "targets": [
+            {
+              "datasource": "AWS CloudWatch",
+              "dimensions": {
+                "Currency": "USD"
+              },
+              "matchExact": true,
+              "metricName": "ForecastedCharges",
+              "namespace": "AWS/Billing",
+              "period": "86400",
+              "refId": "A",
+              "region": "default",
+              "statistics": [ "Maximum" ]
+            }
+          ]
+        },
+        {
+          "title": "Current Month-to-Date AWS Cost",
+          "type": "stat",
+          "datasource": "AWS CloudWatch",
+          "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [ "lastNotNull" ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": "AWS CloudWatch",
+              "dimensions": {
+                "Currency": "USD"
+              },
+              "matchExact": true,
+              "metricName": "EstimatedCharges",
+              "namespace": "AWS/Billing",
+              "period": "86400",
+              "refId": "A",
+              "region": "default",
+              "statistics": [ "Maximum" ]
+            }
+          ]
+        },
+        {
+          "title": "Daily AWS Costs",
+          "type": "timeseries",
+          "datasource": "AWS CloudWatch",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "datasource": "AWS CloudWatch",
+              "dimensions": {
+                "Currency": "USD"
+              },
+              "matchExact": true,
+              "metricName": "EstimatedCharges",
+              "namespace": "AWS/Billing",
+              "period": "86400",
+              "refId": "A",
+              "region": "default",
+              "statistics": [ "Maximum" ]
+            }
+          ]
+        },
+        {
+          "title": "Kubernetes Cost by Namespace (Last 24h)",
+          "type": "piechart",
+          "datasource": "Prometheus (from Kubecost)",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+          "options": {
+            "displayLabels": [ "name", "percent" ],
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "pieType": "pie"
+          },
+          "targets": [
+            {
+              "datasource": "Prometheus (from Kubecost)",
+              "expr": "sum(namespace_total_cost{window=\\"24h\\"}) by (namespace)",
+              "legendFormat": "{{namespace}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Cost by Team (Last 24h)",
+          "type": "piechart",
+          "datasource": "Prometheus (from Kubecost)",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+          "options": {
+            "displayLabels": [ "name", "percent" ],
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "pieType": "pie"
+          },
+          "targets": [
+            {
+              "datasource": "Prometheus (from Kubecost)",
+              "expr": "sum(label_total_cost{label=\\"team\\", window=\\"24h\\"}) by (label_team)",
+              "legendFormat": "{{label_team}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Cost by Project (Last 24h)",
+          "type": "piechart",
+          "datasource": "Prometheus (from Kubecost)",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+          "options": {
+            "displayLabels": [ "name", "percent" ],
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "pieType": "pie"
+          },
+          "targets": [
+            {
+              "datasource": "Prometheus (from Kubecost)",
+              "expr": "sum(label_total_cost{label=\\"project\\", window=\\"24h\\"}) by (label_project)",
+              "legendFormat": "{{label_project}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Total Kubernetes Cost (7-day)",
+          "type": "timeseries",
+          "datasource": "Prometheus (from Kubecost)",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "datasource": "Prometheus (from Kubecost)",
+              "expr": "sum(namespace_total_cost{window=\\"7d\\"})",
+              "legendFormat": "Total Cost",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "refresh": "1h",
+      "schemaVersion": 36,
+      "style": "dark",
+      "tags": [ "finops", "cloud-cost" ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-7d",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Cloud Cost Hub",
+      "version": 4
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:9.5.1
+        ports:
+        - containerPort: 3000
+          name: http-grafana
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+        volumeMounts:
+          - name: grafana-datasources-volume
+            mountPath: /etc/grafana/provisioning/datasources
+          - name: grafana-dashboards-volume
+            mountPath: /etc/grafana/provisioning/dashboards
+          - name: grafana-dashboard-definitions
+            mountPath: /var/lib/grafana/dashboards
+      volumes:
+        - name: grafana-datasources-volume
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboards-volume
+          configMap:
+            name: grafana-dashboards
+            items:
+              - key: finops-dashboard-provider.yaml
+                path: finops-dashboard-provider.yaml
+        - name: grafana-dashboard-definitions
+          configMap:
+            name: grafana-dashboards
+            items:
+              - key: finops-dashboard.json
+                path: finops-dashboard.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: http-grafana
+  selector:
+    app: grafana
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: grafana
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  rules:
+  - host: grafana.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
