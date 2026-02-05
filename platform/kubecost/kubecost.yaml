@@ -64,6 +64,8 @@ spec:
               key: cloud-provider-api-key
         - name: CLUSTER_ID
           value: cluster-one
+        - name: CUSTOM_LABELS
+          value: "team,project"
         ports:
         - containerPort: 9003
           name: server
