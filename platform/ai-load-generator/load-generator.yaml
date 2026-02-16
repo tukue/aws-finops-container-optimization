@@ -1,0 +1,98 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ai-load-generator-unoptimized
+  namespace: default
+  labels:
+    app: ai-load-generator
+    phase: unoptimized
+spec:
+  template:
+    metadata:
+      labels:
+        app: ai-load-generator
+        phase: unoptimized
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: load-generator
+        image: ai-load-generator:latest
+        env:
+        - name: LOAD_PATTERN
+          value: "unoptimized"
+        - name: DURATION_MINUTES
+          value: "30"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ai-load-generator-optimized
+  namespace: default
+  labels:
+    app: ai-load-generator
+    phase: optimized
+spec:
+  template:
+    metadata:
+      labels:
+        app: ai-load-generator
+        phase: optimized
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: load-generator
+        image: ai-load-generator:latest
+        env:
+        - name: LOAD_PATTERN
+          value: "optimized"
+        - name: DURATION_MINUTES
+          value: "30"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ai-load-generator-continuous
+  namespace: default
+  labels:
+    app: ai-load-generator
+    type: continuous
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ai-load-generator
+            type: continuous
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: load-generator
+            image: ai-load-generator:latest
+            env:
+            - name: LOAD_PATTERN
+              value: "optimized"
+            - name: DURATION_MINUTES
+              value: "4"  # Run for 4 minutes every 5 minutes
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi

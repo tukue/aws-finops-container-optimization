@@ -47,7 +47,7 @@ This project includes several features to help you optimize your cloud spend:
   - **Savings Plan Strategy**: A framework for purchasing AWS Savings Plans for baseline workloads to maximize commitment discounts.
 
 ### 3. Operate: Automating Governance & Control
-
+    u
 To ensure that costs are managed proactively, this project includes several governance features:
 
 - **Policy as Code**: The CI/CD pipeline includes security scanning with **Trivy** and **Terrascan** to identify vulnerabilities and misconfigurations before they are deployed.

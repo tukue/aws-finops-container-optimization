@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: AI Gateway Metrics
+    type: prometheus
+    access: proxy
+    url: http://ai-gateway:8000
+    isDefault: true
+    jsonData:
+      httpMethod: GET
+    editable: true
