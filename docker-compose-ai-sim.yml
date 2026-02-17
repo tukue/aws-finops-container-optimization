@@ -25,6 +25,17 @@ services:
       timeout: 10s
       retries: 3
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - ai-gateway
+
   grafana:
     image: grafana/grafana:10.2.0
     ports:
@@ -36,8 +47,10 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./platform/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./platform/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./platform/grafana/ai-metrics-dashboard.json:/etc/grafana/provisioning/dashboards/ai-metrics-dashboard.json
     depends_on:
-      - ai-gateway
+      - prometheus
 
   load-generator-unoptimized:
     build: ./services/ai-load-generator

@@ -124,7 +124,7 @@ async def chat_completions(request: ChatRequest):
     try:
         # Validate model
         if request.model not in MODEL_CONFIGS:
-            raise HTTPException(status_code=400, f"Model {request.model} not supported")
+            raise HTTPException(status_code=400, detail=f"Model {request.model} not supported")
         
         config = MODEL_CONFIGS[request.model]
         

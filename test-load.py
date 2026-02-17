@@ -1,58 +1,49 @@
 import requests
 import time
-import concurrent.futures
-import statistics
+import random
 
-def test_inference_api(base_url="http://localhost:8000"):
-    """Load test the inference API"""
-    
-    def make_request():
-        try:
-            start = time.time()
-            response = requests.post(
-                f"{base_url}/predict",
-                json={"text": "Test input for AI model"},
-                timeout=5
-            )
-            end = time.time()
-            return response.status_code == 200, end - start
-        except:
-            return False, 0
-    
-    print("Load testing inference API...")
-    
-    # Test with 10 concurrent requests
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(make_request) for _ in range(100)]
-        results = [future.result() for future in futures]
-    
-    success_count = sum(1 for success, _ in results if success)
-    response_times = [rt for success, rt in results if success]
-    
-    print(f"Success rate: {success_count}/100 ({success_count}%)")
-    if response_times:
-        print(f"Avg response time: {statistics.mean(response_times):.3f}s")
-        print(f"95th percentile: {statistics.quantiles(response_times, n=20)[18]:.3f}s")
-    
-    return success_count >= 95  # 95% success rate required
+# Sample prompts
+prompts = [
+    "Explain cloud cost optimization",
+    "What are Kubernetes best practices?",
+    "How to reduce AI costs?",
+]
 
-def test_health_endpoints():
-    """Test health endpoints"""
+models = ["gpt-4", "gpt-3.5-turbo", "claude-haiku"]
+
+print("Generating load to populate Grafana metrics...")
+print("Sending 30 requests (10 per model)...\n")
+
+for i in range(30):
+    model = models[i % 3]
+    prompt = prompts[i % 3]
+    
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 100,
+        "temperature": 0.7,
+        "enable_cache": True if i > 15 else False
+    }
+    
     try:
-        response = requests.get("http://localhost:8000/health", timeout=5)
-        return response.status_code == 200
-    except:
-        return False
+        response = requests.post(
+            "http://localhost:8080/v1/chat/completions",
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            cached = "✓ CACHED" if data.get("cached") else ""
+            print(f"{i+1}. {model:20} Cost: ${data.get('estimated_cost', 0):.6f} {cached}")
+        else:
+            print(f"{i+1}. Error: {response.status_code}")
+    except Exception as e:
+        print(f"{i+1}. Exception: {e}")
+    
+    time.sleep(0.5)
 
-if __name__ == "__main__":
-    print("Starting service load tests...")
-    
-    if not test_health_endpoints():
-        print("Health check failed!")
-        exit(1)
-    
-    if not test_inference_api():
-        print("Load test failed!")
-        exit(1)
-    
-    print("All load tests passed!")
+print("\n✓ Load generation complete!")
+print("Check Grafana at http://localhost:3000")
+print("Default credentials: admin/admin")
