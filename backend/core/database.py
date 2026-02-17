@@ -1,6 +1,14 @@
 import redis.asyncio as redis
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 from core.config import settings
 from typing import AsyncGenerator
+
+# SQLAlchemy async engine and session
+DATABASE_URL = "sqlite+aiosqlite:///./events.db"  # Default SQLite for demo
+engine = create_async_engine(DATABASE_URL, echo=settings.debug)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+Base = declarative_base()
 
 
 class RedisDatabase:

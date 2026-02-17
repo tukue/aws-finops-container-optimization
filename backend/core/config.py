@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     api_version: str = "1.0.0"
     
     # Security
-    secret_key: str = "your-secret-key-change-in-production"
+    secret_key: str  # Required: Must be set via environment variable
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     

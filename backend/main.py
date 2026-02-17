@@ -69,7 +69,15 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             # Keep connection alive and handle incoming messages
             data = await websocket.receive_text()
-            message = json.loads(data)
+            
+            try:
+                message = json.loads(data)
+            except json.JSONDecodeError as e:
+                await websocket.send_text(json.dumps({
+                    "type": "error",
+                    "message": f"Invalid JSON: {str(e)}"
+                }))
+                continue
             
             # Handle different message types
             if message.get("type") == "subscribe":

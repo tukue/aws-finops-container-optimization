@@ -18,10 +18,10 @@ try:
     redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
     redis_client.ping()
     CACHE_ENABLED = True
-except:
+except (redis.ConnectionError, redis.TimeoutError) as e:
     redis_client = None
     CACHE_ENABLED = False
-    print("Redis not available, using in-memory cache")
+    print(f"Redis not available, using in-memory cache: {e}")
 
 # In-memory cache fallback
 memory_cache = {}
@@ -83,7 +83,7 @@ def generate_cache_key(request: ChatRequest) -> str:
         "max_tokens": request.max_tokens,
         "temperature": request.temperature
     }, sort_keys=True)
-    return hashlib.md5(content.encode()).hexdigest()
+    return hashlib.sha256(content.encode()).hexdigest()
 
 def get_from_cache(key: str) -> Optional[dict]:
     """Get response from cache"""
@@ -91,8 +91,8 @@ def get_from_cache(key: str) -> Optional[dict]:
         try:
             cached = redis_client.get(key)
             return json.loads(cached) if cached else None
-        except:
-            pass
+        except (redis.RedisError, json.JSONDecodeError) as e:
+            print(f"Cache retrieval error: {e}")
     return memory_cache.get(key)
 
 def set_cache(key: str, value: dict, ttl: int = 3600):
@@ -101,8 +101,8 @@ def set_cache(key: str, value: dict, ttl: int = 3600):
         try:
             redis_client.setex(key, ttl, json.dumps(value))
             return
-        except:
-            pass
+        except (redis.RedisError, json.JSONEncodeError) as e:
+            print(f"Cache storage error: {e}")
     memory_cache[key] = value
 
 def simulate_ai_response(request: ChatRequest) -> str:
