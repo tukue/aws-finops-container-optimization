@@ -172,7 +172,7 @@
       "title": "Total Kubernetes Cost (7-day)",
       "type": "timeseries",
       "datasource": "Prometheus (from Kubecost)",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom" }
       },
@@ -182,6 +182,133 @@
           "expr": "sum(namespace_total_cost{window=\"7d\"})",
           "legendFormat": "Total Cost",
           "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI Token Cost (Hourly)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(ai_cost_total[1h])",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI Cache Hit Ratio",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 24 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "percent"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "(rate(ai_cache_hits_total[5m]) / (rate(ai_cache_hits_total[5m]) + rate(ai_cache_misses_total[5m]))) * 100",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI Model Distribution",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 24 },
+      "options": {
+        "displayLabels": [ "name", "percent" ],
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "pieType": "pie"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(ai_tokens_total[1h])) by (model)",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI Tokens per Hour",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 24 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(ai_tokens_total[1h])",
+          "legendFormat": "{{type}} - {{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Active AI Requests",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 24 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "ai_active_requests",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI Cost Savings (Cache Impact)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(ai_cost_total[1h])",
+          "legendFormat": "Actual Cost",
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(ai_cost_total[1h]) + (rate(ai_cache_hits_total[1h]) * 0.03)",
+          "legendFormat": "Cost Without Cache",
+          "refId": "B"
         }
       ]
     }

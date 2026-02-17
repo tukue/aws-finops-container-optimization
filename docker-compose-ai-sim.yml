@@ -1,0 +1,78 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ai-gateway:
+    build: ./services/ai-gateway-mock
+    ports:
+      - "8080:8000"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - ai-gateway
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./platform/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./platform/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./platform/grafana/ai-metrics-dashboard.json:/etc/grafana/provisioning/dashboards/ai-metrics-dashboard.json
+    depends_on:
+      - prometheus
+
+  load-generator-unoptimized:
+    build: ./services/ai-load-generator
+    environment:
+      - LOAD_PATTERN=unoptimized
+      - DURATION_MINUTES=5
+      - AI_GATEWAY_URL=http://ai-gateway:8000/v1/chat/completions
+    depends_on:
+      - ai-gateway
+    profiles:
+      - phase1
+
+  load-generator-optimized:
+    build: ./services/ai-load-generator
+    environment:
+      - LOAD_PATTERN=optimized
+      - DURATION_MINUTES=5
+      - AI_GATEWAY_URL=http://ai-gateway:8000/v1/chat/completions
+    depends_on:
+      - ai-gateway
+    profiles:
+      - phase2
+
+volumes:
+  grafana-storage:
